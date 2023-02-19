@@ -1,8 +1,10 @@
 import argparse
-from xml.etree import ElementTree as ET
+import os
+from pyhtml2pdf import converter
 
 versionString = '0.1.0'
-outputFilename = 'invoice.txt'
+inputFilename = 'template.html'
+outputFilename = 'output.pdf'
 
 def createCli():
     parser = argparse.ArgumentParser(prog = 'InvoiceCreator',
@@ -16,17 +18,11 @@ def createCli():
 def printVersionInformation():
     print('InvoiceCreator v{}'.format(versionString))
     
-def generateInvoiceContent(date, value):
-    html = ET.html('html')
-    body = ET.body('body')
-    html.append(body)
-    return html
-
 if __name__ == "__main__":
     cliArgs = createCli()
     if cliArgs.version:
         printVersionInformation()
-        
-    invoiceXml = generateInvoiceContent(cliArgs.date, cliArgs.invoiceValue)
-    ET.ElementTree(invoiceXml).write(outputFilename, method='html')
+    else:
+        path = os.path.abspath(inputFilename)
+        converter.convert(f'file:///{path}', outputFilename)
   
