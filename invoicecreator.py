@@ -2,9 +2,8 @@ import argparse
 import os
 from pyhtml2pdf import converter
 
-versionString = '0.2.0'
+versionString = '0.2.1'
 inputFilename = 'template.html'
-intermediateFilename = 'template-filled.html'
 outputFilename = 'output.pdf'
 
 def createCli():
@@ -38,13 +37,16 @@ def createData(cliArgs):
     data['value'] = cliArgs.invoiceValue if cliArgs.invoiceValue else '4166.00'
     return data
     
+def createInvoicePdf(templateFile, outputFilename, invoiceData):
+    intermediateFilename = 'template-filled.html'
+    createFilledTemplate(templateFile, intermediateFilename, invoiceData)
+    path = os.path.abspath(intermediateFilename)
+    converter.convert(f'file:///{path}', outputFilename)
+    
 if __name__ == "__main__":
     cliArgs = createCli()
     if cliArgs.version:
         printVersionInformation()
     else:
         data = createData(cliArgs)
-        createFilledTemplate(inputFilename, intermediateFilename, data)
-        path = os.path.abspath(intermediateFilename)
-        converter.convert(f'file:///{path}', outputFilename)
-  
+        createInvoicePdf(inputFilename, outputFilename, data)
