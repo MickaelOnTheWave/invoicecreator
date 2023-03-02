@@ -10,7 +10,7 @@ h1 {
 	text-transform: uppercase;
 	text-align : right;	
 	font-size : 28px;
-	color : red;
+	color : #ff6666;
 }
 
 p {
@@ -67,7 +67,7 @@ p {
 	margin-top : 25px;
 	margin-bottom : 25px;
 	
-	background-color : red;
+	background-color : #800000;
 }
 
 .ClientInfo {
