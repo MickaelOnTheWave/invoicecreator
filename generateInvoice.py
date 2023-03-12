@@ -9,24 +9,30 @@ versionString = '0.1'
 dataFile = 'data.txt'
 
 class InvoiceData:
-    def __init__(self, invoiceDate, fileData):
+    def __init__(self, fileData):
         self.id = fileData['id']
-        self.date = invoiceDate
+        self.date = fileData['date']
         self.client = fileData['client']
         self.company = fileData['company']
         self.value = fileData['value']
 
 def getInvoiceDate(month):
+    currentDate = datetime.datetime.now()    
+    monthToUse = month if month else currentDate.month
+    return lastDayOfMonth(monthToUse)
+
+def lastDayOfMonth(month):
     currentDate = datetime.datetime.now()
-    if month:
-        currentDate.setMonth(month)
-    return currentDate
-    
+    lastDay = calendar.monthrange(currentDate.year, month)[1]
+    targetDate = datetime.datetime(currentDate.year, month, lastDay)
+    return targetDate
+  
+def invoiceDisplay(date):
+    return date.strftime('%d %b %Y')
+
 def lastDayOfCurrentMonth():
     currentDate = datetime.datetime.now()
-    lastDay = calendar.monthrange(currentDate.year, currentDate.month)[1]
-    targetDate = datetime.datetime(currentDate.year, currentDate.month, lastDay)
-    return targetDate.strftime('%d %b %Y')
+    return lastDayOfMonth(currentDate.month)
     
 def defaultFileData():
     defaultData = {
@@ -34,7 +40,7 @@ def defaultFileData():
         'date' : lastDayOfCurrentMonth(),
         'client' : 'Mega',
         'company' : 'Guimarães Tecnologia',
-        'value' : 4166
+        'value' : '4166.00'
         }
     return defaultData
     
@@ -57,14 +63,36 @@ def createCli():
 def printVersionInformation():
     print('InvoiceAutoGenerator v{}'.format(versionString))
     
+def askForUserConfirmation(invoiceData):
+    print('An invoice will be generated using the following data :')
+    print('ID :', invoiceData.id)
+    print('Date :', invoiceDisplay(invoiceData.date))
+    print('Client :', invoiceData.client)
+    print('Company :', invoiceData.company)
+    print('Value :', invoiceData.value)
+    print('')
+    userAnswer = input('Do you want to proceed ? (y or n)')
+    return userAnswer == 'y'
+    
+def generateFilename(date):
+    return date.strftime('%Y-%m') + ' Consulting Invoice.pdf'
+    
+def createInvoice(invoiceData):
+    pdfFilename = generateFilename(invoiceData.date)
+    data = {'invoiceId' : invoiceData.id,
+            'date' : invoiceDisplay(invoiceData.date),
+            'value' : invoiceData.value}
+    invoicecreator.createInvoicePdf('template.html', pdfFilename, data)
+    return pdfFilename
+    
 if __name__ == "__main__":
     cliArgs = createCli()
     if cliArgs.version:
         printVersionInformation()
     else:
-        invoiceDate = getInvoiceDate(cliArgs.month)
         fileData = getDataFromFile(dataFile)
-        invoiceData = InvoiceData(invoiceDate, fileData)
+        fileData['date'] = getInvoiceDate(cliArgs.month)
+        invoiceData = InvoiceData(fileData)
         proceed = askForUserConfirmation(invoiceData)
         if proceed:
             invoiceFile = createInvoice(invoiceData)
