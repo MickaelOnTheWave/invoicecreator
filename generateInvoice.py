@@ -5,17 +5,18 @@ import invoicecreator
 import os
 import pickle
 
-versionString = '0.1'
+versionString = '0.2'
 dataFile = 'data.txt'
 
-class InvoiceData:
-    def __init__(self, fileData):
-        self.id = fileData['id']
-        self.date = fileData['date']
-        self.client = fileData['client']
-        self.company = fileData['company']
-        self.value = fileData['value']
+def invoiceDateDisplay(date):
+    return date.strftime('%d %b %Y')
 
+def invoiceIdDisplay(id):
+    return "{:04d}".format(id)
+    
+def invoiceValueDisplay(value):
+    return "{0:.2f}".format(value)
+    
 def getInvoiceDate(month):
     currentDate = datetime.datetime.now()    
     monthToUse = month if month else currentDate.month
@@ -26,9 +27,7 @@ def lastDayOfMonth(month):
     lastDay = calendar.monthrange(currentDate.year, month)[1]
     targetDate = datetime.datetime(currentDate.year, month, lastDay)
     return targetDate
-  
-def invoiceDisplay(date):
-    return date.strftime('%d %b %Y')
+ 
 
 def lastDayOfCurrentMonth():
     currentDate = datetime.datetime.now()
@@ -36,11 +35,11 @@ def lastDayOfCurrentMonth():
     
 def defaultFileData():
     defaultData = {
-        'id' : '0001',
+        'invoiceId' : 1,
         'date' : lastDayOfCurrentMonth(),
         'client' : 'Mega',
         'company' : 'Guimarães Tecnologia',
-        'value' : '4166.00'
+        'value' : 4166
         }
     return defaultData
     
@@ -65,11 +64,11 @@ def printVersionInformation():
     
 def askForUserConfirmation(invoiceData):
     print('An invoice will be generated using the following data :')
-    print('ID :', invoiceData.id)
-    print('Date :', invoiceDisplay(invoiceData.date))
-    print('Client :', invoiceData.client)
-    print('Company :', invoiceData.company)
-    print('Value :', invoiceData.value)
+    print('ID :', invoiceIdDisplay(invoiceData['invoiceId']))
+    print('Date :', invoiceDateDisplay(invoiceData['date']))
+    print('Client :', invoiceData['client'])
+    print('Company :', invoiceData['company'])
+    print('Value :', invoiceValueDisplay(invoiceData['value']))
     print('')
     userAnswer = input('Do you want to proceed ? (y or n)')
     return userAnswer == 'y'
@@ -78,23 +77,36 @@ def generateFilename(date):
     return date.strftime('%Y-%m') + ' Consulting Invoice.pdf'
     
 def createInvoice(invoiceData):
-    pdfFilename = generateFilename(invoiceData.date)
-    data = {'invoiceId' : invoiceData.id,
-            'date' : invoiceDisplay(invoiceData.date),
-            'value' : invoiceData.value}
+    pdfFilename = generateFilename(invoiceData['date'])
+    data = {'invoiceId' : invoiceIdDisplay(invoiceData['invoiceId']),
+            'date' : invoiceDateDisplay(invoiceData['date']),
+            'value' : invoiceValueDisplay(invoiceData['value'])
+            }
     invoicecreator.createInvoicePdf('template.html', pdfFilename, data)
     return pdfFilename
+    
+def updateDatafile(data):
+    data['invoiceId'] += 1
+    print(data)
+    with open(dataFile, 'wb') as fp:
+        pickle.dump(data, fp)
+    
+def copyToMegaFolder(invoiceFile):
+    print('TODO : copy file', invoiceFile, 'to MEGA folder')
+
+def prepareEmail(invoiceFile, date):
+    print('TODO : Create email to Mega with', invoiceFile, 'attached')
     
 if __name__ == "__main__":
     cliArgs = createCli()
     if cliArgs.version:
         printVersionInformation()
     else:
-        fileData = getDataFromFile(dataFile)
-        fileData['date'] = getInvoiceDate(cliArgs.month)
-        invoiceData = InvoiceData(fileData)
+        invoiceData = getDataFromFile(dataFile)
+        invoiceData['date'] = getInvoiceDate(cliArgs.month)
         proceed = askForUserConfirmation(invoiceData)
         if proceed:
             invoiceFile = createInvoice(invoiceData)
+            updateDatafile(invoiceData)
             copyToMegaFolder(invoiceFile)
-            prepareEmail(invoiceFile, invoiceData.date)
+            prepareEmail(invoiceFile, invoiceData['date'])
